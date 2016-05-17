@@ -17,9 +17,6 @@ final case class Hhead[A, T <: MyHList](head:A, tail: T) extends MyHList {
 }
 
 object #: {
-  def apply[T,TT](t: T, tt: TT): MyHList =
-    Hhead(t, Hhead(tt, HNil))
-
   def unapply[A, T <: MyHList](hlist: Hhead[A, T]): Option[(A, T)] =
     Some((hlist.head, hlist.tail))
 }
