@@ -7,7 +7,8 @@ sealed trait HlistMayContain[H <: MyHList, U]
 trait HContains[H <: MyHList, U]         extends HlistMayContain[H, U] { def extract(in: H): U }
 @implicitNotFound("Could not prove that the Hlist ${H} does not contain ${U}")
 trait HDoesNotContain[H <: MyHList, U]   extends HlistMayContain[H, U]
-//trait HContainsOnlyOnce[H <: MyHList, U] extends HlistMayContain[H, U] To be implemented... peter you want to give a crack to this?
+@implicitNotFound("Could not prove that the Hlist ${H} contains ${U} only once")
+trait HContainsOnlyOnce[H <: MyHList, U] extends HlistMayContain[H, U]
 
 object Constraints {
 
@@ -28,7 +29,7 @@ object Constraints {
     }
 
   // recursive case
-  implicit def UWasFound[U, H, T <: MyHList](implicit ev: HContains[T, U]) =
+  implicit def UWasFound[U, H, T <: MyHList](implicit ev: HContains[T, U]): HContains[Hhead[H, T], U] =
     new HContains[Hhead[H, T], U] {
       override def extract(in: Hhead[H, T]): U = ev.extract(in.tail)
     }
@@ -48,8 +49,21 @@ object Constraints {
     def extract[A](implicit extractor: HContains[T, A]): A = extractor.extract(in)
   }
 
-}
+  //HContainsOnlyOnce:
+  // trivial case
+  implicit def UIsAloneWithNil[U, T <: MyHList]: HContainsOnlyOnce[Hhead[U, HNil], U] = {
+    new HContainsOnlyOnce[Hhead[U, HNil], U] {}
+  }
 
+  // recursive case, current head not U
+  implicit def UWasFoundOnce[U, H, T <: MyHList](implicit ev: HContainsOnlyOnce[T, U], neq: U =!= H): HContainsOnlyOnce[Hhead[H, T], U] =
+    new HContainsOnlyOnce[Hhead[H, T], U] {}
+
+  // current head is U
+  implicit def UIsFoundOnce[U, H, T <: MyHList](implicit ev: HDoesNotContain[T, U]): HContainsOnlyOnce[Hhead[U, T], U] =
+    new HContainsOnlyOnce[Hhead[U, T], U] {}
+
+}
 
 
 object TestConstratints extends App {
@@ -62,10 +76,10 @@ object TestConstratints extends App {
 
     def notContain[U](implicit ev: HDoesNotContain[H, U]) =
       println(s"$in does not contain the selected type!")
-  }
-  def contains[H <: MyHList, U](in: H)(implicit ev: HContains[H, U]) =
-    println(s"$in contains the selected type!")
 
+    def containsOnce[U](implicit ev: HContainsOnlyOnce[H, U]) =
+      println(s"$in contains the selected type once and only once!")
+  }
 
   (1 #: HNil).contains[Int]
 
@@ -80,6 +94,9 @@ object TestConstratints extends App {
 
   //("!" #: 1.0 #: HNil).notContain[Double] //rightfully does not compile!
 
+  /**
+    * Test extract
+    */
   val h1 = 1 #: HNil
   val easyInt = h1.extract[Int]
   println(s"I extracted $easyInt from $h1 !")
@@ -91,5 +108,17 @@ object TestConstratints extends App {
   println(s"I extracted $harderDouble from $h2 !")
 
   //h2.extract[Boolean] //rightfully does not compile - no Boolean in list
+
+  /**
+    * Test containsOnce
+    */
+  (1 #: HNil).containsOnce[Int]
+  ("foo" #: 1 #: HNil).containsOnce[Int]
+  (1 #: "foo" #: HNil).containsOnce[Int]
+  (1 #: 2 #: "hello" #: 5 #: 8 #: HNil).containsOnce[String]
+
+  //(1 #: 2 #: HNil).containsOnce[Int] //rightfully does not compile - too many
+  //(5.0 #: 1 #: "a" #: true #: 2 #: HNil).containsOnce[Int] //rightfully does not compile - too many
+  //(1 #: 2 #: "b" #: HNil).containsOnce[Double] //rightfully does not compile - not found
 
 }
