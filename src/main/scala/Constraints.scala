@@ -8,7 +8,7 @@ trait HContains[H <: MyHList, U]         extends HlistMayContain[H, U] { def ext
 @implicitNotFound("Could not prove that the Hlist ${H} does not contain ${U}")
 trait HDoesNotContain[H <: MyHList, U]   extends HlistMayContain[H, U]
 @implicitNotFound("Could not prove that the Hlist ${H} contains ${U} only once")
-trait HContainsOnlyOnce[H <: MyHList, U] extends HlistMayContain[H, U]
+trait HContainsOnlyOnce[H <: MyHList, U] extends HlistMayContain[H, U] { def extract(in: H): U }
 
 object Constraints {
 
@@ -47,21 +47,21 @@ object Constraints {
   // extractor interface
   implicit class Extractor[T <: MyHList](in: T) {
     def extract[A](implicit extractor: HContains[T, A]): A = extractor.extract(in)
+    def extractSafe[A](implicit extractor: HContainsOnlyOnce[T, A]): A = extractor.extract(in)
   }
 
   //HContainsOnlyOnce:
-  // trivial case
-  implicit def UIsAloneWithNil[U, T <: MyHList]: HContainsOnlyOnce[Hhead[U, HNil], U] = {
-    new HContainsOnlyOnce[Hhead[U, HNil], U] {}
-  }
+  // trivial case - current head is U
+  implicit def UIsFoundOnce[U, H, T <: MyHList](implicit ev: HDoesNotContain[T, U]): HContainsOnlyOnce[Hhead[U, T], U] =
+    new HContainsOnlyOnce[Hhead[U, T], U] {
+      override def extract(in: Hhead[U, T]): U = in.head
+    }
 
   // recursive case, current head not U
   implicit def UWasFoundOnce[U, H, T <: MyHList](implicit ev: HContainsOnlyOnce[T, U], neq: U =!= H): HContainsOnlyOnce[Hhead[H, T], U] =
-    new HContainsOnlyOnce[Hhead[H, T], U] {}
-
-  // current head is U
-  implicit def UIsFoundOnce[U, H, T <: MyHList](implicit ev: HDoesNotContain[T, U]): HContainsOnlyOnce[Hhead[U, T], U] =
-    new HContainsOnlyOnce[Hhead[U, T], U] {}
+    new HContainsOnlyOnce[Hhead[H, T], U] {
+      override def extract(in: Hhead[H, T]): U = ev.extract(in.tail)
+    }
 
 }
 
@@ -121,4 +121,14 @@ object TestConstratints extends App {
   //(5.0 #: 1 #: "a" #: true #: 2 #: HNil).containsOnce[Int] //rightfully does not compile - too many
   //(1 #: 2 #: "b" #: HNil).containsOnce[Double] //rightfully does not compile - not found
 
+  /**
+    * Test extractSafe
+    */
+  val string1 = (1 #: 2 #: "hello" #: 5 #: 8 #: HNil).extractSafe[String]
+  println(s"I safely extracted $string1!")
+
+  val int1 = (9.9 #: 1 #: "foo" #: HNil).extractSafe[Int]
+  println(s"I safely extracted $int1!")
+
+  //(1 #: 2 #: "hello" #: 5 #: 8 #: HNil).extractSafe[Int] //rightfully does not compile - too many to decide what to extract
 }
