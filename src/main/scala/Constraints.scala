@@ -4,11 +4,19 @@ import scala.language.higherKinds
 sealed trait HlistMayContain[H <: MyHList, U]
 
 @implicitNotFound("Could not prove that the Hlist ${H} contains ${U}")
-trait HContains[H <: MyHList, U]         extends HlistMayContain[H, U] { def extract(in: H): U }
+trait HContains[H <: MyHList, U]         extends HlistMayContain[H, U] {
+
+  def extract(in: H): U
+}
+
 @implicitNotFound("Could not prove that the Hlist ${H} does not contain ${U}")
 trait HDoesNotContain[H <: MyHList, U]   extends HlistMayContain[H, U]
+
 @implicitNotFound("Could not prove that the Hlist ${H} contains ${U} only once")
-trait HContainsOnlyOnce[H <: MyHList, U] extends HlistMayContain[H, U] { def extract(in: H): U }
+trait HContainsOnlyOnce[H <: MyHList, U] extends HlistMayContain[H, U] {
+
+  def extract(in: H): U
+}
 
 object Constraints {
 
@@ -16,7 +24,7 @@ object Constraints {
   type With[U] = {
     type NotContained[H <: MyHList] = HDoesNotContain[H, U]
     type Contained[H <: MyHList] = HContains[H, U]
-    //  type ContainedOnce[H <: MyHList] = HContainsOnce[H, U]  not yet implemented
+    type ContainedOnce[H <: MyHList] = HContainsOnlyOnce[H, U]
   }
 
 
@@ -33,7 +41,6 @@ object Constraints {
     new HContains[Hhead[H, T], U] {
       override def extract(in: Hhead[H, T]): U = ev.extract(in.tail)
     }
-
   // HDoesNotContain
 
   // trivial case

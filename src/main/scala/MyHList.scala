@@ -14,6 +14,8 @@ final case class Hhead[A, T <: MyHList](head:A, tail: T) extends MyHList {
   type elem = A
 
   def #:[TT](first: TT): Hhead[TT, Hhead[A, T]] = Hhead(first, Hhead(head, tail))
+
+  override def toString = head.toString + " :# " + tail.toString
 }
 
 object #: {
