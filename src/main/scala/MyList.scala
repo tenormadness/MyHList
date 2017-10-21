@@ -1,7 +1,7 @@
 import scala.language.implicitConversions
 
 sealed abstract class MyList[+T] {
-  // def #: deferred beacuse I want very fine detail about the result type
+  // def :+: deferred beacuse ... because otherwise it will be hard later
 }
 
 sealed trait MyNil extends MyList[Nothing] {
@@ -12,7 +12,7 @@ case object MyNil extends MyNil
 
 final case class MyHead[T](head:T, tail: MyList[T]) extends MyList[T] {
 
-  def :+:[X >: T](first: X) = MyHead(first, MyHead(head, tail))
+  def :+:[X >: T](first: X): MyList[X] = MyHead(first, MyHead(head, tail))
 
   override def toString = head.toString + " :# " + tail.toString
 }
