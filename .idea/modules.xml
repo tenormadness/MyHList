@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/myhlist.iml" filepath="$PROJECT_DIR$/.idea/modules/myhlist.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/myhlist-build.iml" filepath="$PROJECT_DIR$/.idea/modules/myhlist-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/myhlist-build.iml" filepath="$PROJECT_DIR$/.idea/modules/myhlist-build.iml" />
     </modules>
   </component>
 </project>
