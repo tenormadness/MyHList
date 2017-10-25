@@ -1,7 +1,15 @@
 import scala.language.implicitConversions
 
 sealed abstract class MyList[+T] {
-  // def :+: deferred beacuse ... because otherwise it will be hard later
+
+  // We need to have a method to concatenate elements and build the list
+  // note: methods that start with : are "magic"
+  // def :+: deferred because ... because otherwise it will be hard later
+
+  def head: T = this match {
+    case MyNil => sys.error(s"empty list")
+    case MyHead(h, t) => h
+  }
 }
 
 sealed trait MyNil extends MyList[Nothing] {
@@ -10,11 +18,11 @@ sealed trait MyNil extends MyList[Nothing] {
 }
 case object MyNil extends MyNil
 
-final case class MyHead[T](head:T, tail: MyList[T]) extends MyList[T] {
+final case class MyHead[T](headd: T, tail: MyList[T]) extends MyList[T] {
 
-  def :+:[X >: T](first: X): MyList[X] = MyHead(first, MyHead(head, tail))
+  def :+:[X >: T](first: X): MyList[X] = MyHead(first, MyHead(headd, tail))
 
-  override def toString = head.toString + " :# " + tail.toString
+  override def toString = headd.toString + " :# " + tail.toString
 }
 
 object :+: {
@@ -25,19 +33,20 @@ object :+: {
 
 object Test extends App {
 
-  val sametype = 0 :: 1 :: Nil
+  // what is the type of these?
+  val sametype = 0 :+: 1 :+: MyNil
   val foo = "one" :+: 1 :+: MyNil
   val bar = "one" :+: "two" :+: MyNil
 
   println(foo)
 
   foo match {
-    case head :+: tail => println(s"head = $head, tail= $tail")
-    case _ => println("found nothing :(")
+    case head :+: tail => println(s"head = $head, tail= $tail") //What is the type of head?
+    case _ => sys.error(s"foo should have a head and a tail")
   }
 
   bar match {
-    case head :+: mid :+: tail => println(s"head = $head, mid = $mid, tail= $tail")
+    case head :+: mid :+: tail => println(s"head = $head, mid = $mid, tail= $tail") //what is the type of head? and Mid?
     case _ => println("found nothing :(")
   }
 
