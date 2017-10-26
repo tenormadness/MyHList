@@ -41,6 +41,8 @@ object Test extends App {
     case _ => println("found nothing :(")
   }
 
+
+  // NOW THIS WORKS!!!
   val baz = 1 #: "one" #: HNil
 
   def intOnlyFunction(i: Int) = i + 1
